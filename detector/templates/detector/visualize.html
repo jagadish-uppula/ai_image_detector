@@ -1,0 +1,610 @@
+{% extends 'detector/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3f37c9;
+        --success-color: #4cc9f0;
+        --danger-color: #f72585;
+        --warning-color: #f8961e;
+        --dark-color: #212529;
+        --light-color: #f8f9fa;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 350px;
+        width: 100%;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        transition: all 0.3s;
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        padding: 1.5rem;
+        height: 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.3;
+        position: absolute;
+        right: 20px;
+        top: 20px;
+    }
+
+    .nav-pills .nav-link {
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-right: 10px;
+        color: var(--dark-color);
+        font-weight: 500;
+    }
+
+    .nav-pills .nav-link.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .tab-content {
+        padding: 1.5rem 0;
+    }
+
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .card-header {
+        background-color: white;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1.25rem 1.5rem;
+    }
+
+    .progress {
+        height: 10px;
+        border-radius: 10px;
+    }
+
+    .list-unstyled li {
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .list-unstyled i {
+        margin-right: 10px;
+        font-size: 1.1rem;
+    }
+
+    .recent-analysis-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .recent-analysis-item:last-child {
+        border-bottom: none;
+    }
+    .video-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        opacity: 0.15;
+    }
+
+    /* Chart tooltip styling */
+    .chartjs-tooltip {
+        background: rgba(0, 0, 0, 0.8) !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        color: white !important;
+        font-family: inherit !important;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .chart-container {
+            height: 300px;
+        }
+        
+        .nav-pills .nav-link {
+            margin-bottom: 10px;
+            margin-right: 0;
+            display: block;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<video autoplay muted loop class="video-bg">
+    <source src="{% static 'videos/face-scan.mp4' %}" type="video/mp4">
+</video>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Confidence Distribution Chart
+        const confidenceCtx = document.getElementById('confidenceChart').getContext('2d');
+        const confidenceChart = new Chart(confidenceCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ confidence_data.labels|safe }},
+                datasets: [
+                    {
+                        label: 'Real Images',
+                        data: {{ confidence_data.real|safe }},
+                        backgroundColor: 'rgba(76, 201, 240, 0.7)',
+                        borderColor: 'rgba(76, 201, 240, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'AI-Generated',
+                        data: {{ confidence_data.ai|safe }},
+                        backgroundColor: 'rgba(247, 37, 133, 0.7)',
+                        borderColor: 'rgba(247, 37, 133, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Confidence Distribution',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        color: '#212529'
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: false,
+                        title: {
+                            display: true,
+                            text: 'Confidence Range',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#495057'
+                        },
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        }
+                    },
+                    y: {
+                        stacked: false,
+                        title: {
+                            display: true,
+                            text: 'Number of Images',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#495057'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Similarity Distribution Chart
+        const similarityCtx = document.getElementById('similarityChart').getContext('2d');
+        const similarityChart = new Chart(similarityCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Real Images',
+                        data: {{ similarity_data.real|safe }},
+                        backgroundColor: 'rgba(76, 201, 240, 0.7)',
+                        borderColor: 'rgba(76, 201, 240, 1)',
+                        borderWidth: 1,
+                        pointRadius: 8,
+                        pointHoverRadius: 10
+                    },
+                    {
+                        label: 'AI-Generated',
+                        data: {{ similarity_data.ai|safe }},
+                        backgroundColor: 'rgba(247, 37, 133, 0.7)',
+                        borderColor: 'rgba(247, 37, 133, 1)',
+                        borderWidth: 1,
+                        pointRadius: 8,
+                        pointHoverRadius: 10
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Face Similarity Scores',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        color: '#212529'
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + '% similarity';
+                            }
+                        },
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        display: false
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Similarity Percentage',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#495057'
+                        },
+                        min: 0,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Timeline Chart
+        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+        const timelineChart = new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: {{ timeline_data.labels|safe }},
+                datasets: [
+                    {
+                        label: 'Real Images',
+                        data: {{ timeline_data.real|safe }},
+                        backgroundColor: 'rgba(76, 201, 240, 0.2)',
+                        borderColor: 'rgba(76, 201, 240, 1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'AI-Generated',
+                        data: {{ timeline_data.ai|safe }},
+                        backgroundColor: 'rgba(247, 37, 133, 0.2)',
+                        borderColor: 'rgba(247, 37, 133, 1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Daily Analysis (Last 7 Days)',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        color: '#212529'
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Number of Images',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#495057'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-left-primary">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Analyses</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_analyses }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-pie stat-icon text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-left-success">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Real Images</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ real_images }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle stat-icon text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-left-danger">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            AI-Generated</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ai_generated }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-robot stat-icon text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-left-info">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Avg Confidence</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ avg_confidence|floatformat:1 }}%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-percent stat-icon text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <ul class="nav nav-pills card-header-pills">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="pill" href="#confidenceTab">Confidence</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="pill" href="#similarityTab">Similarity</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="pill" href="#timelineTab">Timeline</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="confidenceTab">
+                        <div class="chart-container">
+                            <canvas id="confidenceChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="similarityTab">
+                        <div class="chart-container">
+                            <canvas id="similarityChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="timelineTab">
+                        <div class="chart-container">
+                            <canvas id="timelineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Detection Insights</h6>
+            </div>
+            <div class="card-body">
+                <h6 class="font-weight-bold mb-3">AI Detection Patterns</h6>
+                <p>Your analysis history shows that {{ ai_percentage }}% of your analyzed images were detected as AI-generated.</p>
+                
+                <div class="progress mb-4">
+                    <div class="progress-bar bg-danger" role="progressbar" 
+                         style="width: {{ ai_percentage }}%" 
+                         aria-valuenow="{{ ai_percentage }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">{{ ai_percentage }}%</div>
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {{ real_percentage }}%" 
+                         aria-valuenow="{{ real_percentage }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">{{ real_percentage }}%</div>
+                </div>
+                
+                <h6 class="font-weight-bold mb-3">Common Characteristics</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <strong>High Confidence:</strong> {{ high_confidence }} analyses with >85% confidence
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        <strong>Medium Confidence:</strong> {{ medium_confidence }} analyses between 70-85%
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-question-circle text-secondary"></i>
+                        <strong>Low Confidence:</strong> {{ low_confidence }} analyses below 70%
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Recent AI Detections</h6>
+            </div>
+            <div class="card-body">
+                {% for analysis in recent_ai %}
+                <div class="recent-analysis-item">
+                    <img src="{{ analysis.image.url }}" alt="Recent AI analysis" width="60" height="60" class="rounded me-3">
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">{{ analysis.created_at|timesince }} ago</small>
+                            <span class="badge bg-danger rounded-pill">{{ analysis.confidence|floatformat:1 }}%</span>
+                        </div>
+                        <div class="progress progress-thin mt-1">
+                            <div class="progress-bar bg-danger" style="width: {{ analysis.confidence }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No recent AI detections</p>
+                {% endfor %}
+                <a href="{% url 'analyze' %}?type=ai" class="btn btn-outline-danger btn-sm w-100 mt-2">
+                    <i class="fas fa-arrow-right me-1"></i> View All AI Detections
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

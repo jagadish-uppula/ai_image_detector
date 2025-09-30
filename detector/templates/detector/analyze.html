@@ -1,0 +1,239 @@
+{% extends 'detector/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3f37c9;
+        --success-color: #4cc9f0;
+        --danger-color: #f72585;
+        --warning-color: #f8961e;
+        --dark-color: #212529;
+        --light-color: #f8f9fa;
+    }
+
+    .analysis-img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .badge-ai {
+        background-color: var(--danger-color);
+        color: white;
+    }
+
+    .badge-real {
+        background-color: var(--success-color);
+        color: white;
+    }
+
+    .search-form {
+        max-width: 500px;
+    }
+
+    .sort-icon {
+        font-size: 0.8rem;
+    }
+
+    .table {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .table th {
+        background-color: var(--light-color);
+        font-weight: 600;
+        padding: 12px 15px;
+    }
+
+    .table td {
+        padding: 12px 15px;
+        vertical-align: middle;
+    }
+
+    .progress {
+        height: 20px;
+        border-radius: 10px;
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+    }
+
+    .btn-group .btn {
+        border-radius: 8px !important;
+    }
+
+    .btn-group .btn.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 0;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    .video-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        opacity: 0.15;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .analysis-img {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .table th, .table td {
+            padding: 8px 10px;
+        }
+        
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .search-form {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<video autoplay muted loop class="video-bg">
+    <source src="{% static 'videos/face-scan.mp4' %}" type="video/mp4">
+</video>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Analysis History</h2>
+    <form class="d-flex search-form" method="GET" action="{% url 'analyze' %}">
+        <input class="form-control me-2" type="search" name="q" placeholder="Search images..." value="{{ request.GET.q }}">
+        <button class="btn btn-outline-primary" type="submit">Search</button>
+    </form>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-column flex-md-row justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Your Analyses</h6>
+        <div class="btn-group mt-2 mt-md-0" role="group">
+            <a href="?type=all" class="btn btn-sm btn-outline-secondary {% if not request.GET.type or request.GET.type == 'all' %}active{% endif %}">All</a>
+            <a href="?type=real" class="btn btn-sm btn-outline-success {% if request.GET.type == 'real' %}active{% endif %}">Real</a>
+            <a href="?type=ai" class="btn btn-sm btn-outline-danger {% if request.GET.type == 'ai' %}active{% endif %}">AI</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>
+                            <a href="?sort={% if request.GET.sort == '-created_at' %}created_at{% else %}-created_at{% endif %}" class="text-decoration-none text-dark">
+                                Date
+                                {% if request.GET.sort == '-created_at' %}
+                                <i class="bi bi-arrow-down sort-icon"></i>
+                                {% elif request.GET.sort == 'created_at' %}
+                                <i class="bi bi-arrow-up sort-icon"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Result</th>
+                        <th>Confidence</th>
+                        <th>Similarity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for analysis in analyses %}
+                    <tr>
+                        <td>
+                            <img src="{{ analysis.image.url }}" alt="Analyzed image" class="analysis-img">
+                        </td>
+                        <td>{{ analysis.created_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            {% if analysis.is_ai_generated %}
+                            <span class="badge badge-ai rounded-pill">AI Generated</span>
+                            {% else %}
+                            <span class="badge badge-real rounded-pill">Real</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar {% if analysis.is_ai_generated %}bg-danger{% else %}bg-success{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ analysis.confidence }}%" 
+                                     aria-valuenow="{{ analysis.confidence }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ analysis.confidence|floatformat:1 }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if analysis.similarity_score %}
+                            <div class="progress">
+                                <div class="progress-bar bg-info" 
+                                     role="progressbar" 
+                                     style="width: {{ analysis.similarity_score }}%" 
+                                     aria-valuenow="{{ analysis.similarity_score }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ analysis.similarity_score|floatformat:1 }}%
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'predict' %}?image_id={{ analysis.id }}" class="btn btn-sm btn-primary" title="Re-analyze">
+                                    <i class="fas fa-redo"></i>
+                                </a>
+                                <form method="post" action="{% url 'delete-analysis' analysis.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this analysis?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="fas fa-folder-open"></i>
+                                <h5>No Analysis Records Found</h5>
+                                <p class="text-muted">Analyze an image to get started</p>
+                                <a href="{% url 'predict' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Analyze Image
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

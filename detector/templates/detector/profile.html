@@ -1,0 +1,275 @@
+{% extends 'detector/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3f37c9;
+        --success-color: #4cc9f0;
+        --danger-color: #f72585;
+        --warning-color: #f8961e;
+        --dark-color: #212529;
+        --light-color: #f8f9fa;
+    }
+
+    .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .profile-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .profile-img-container {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 1.5rem;
+    }
+
+    .profile-img {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 5px solid white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+
+    .profile-img:hover {
+        transform: scale(1.05);
+    }
+
+    .profile-content {
+        background-color: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .security-badge {
+        font-size: 0.9rem;
+        padding: 8px 15px;
+        border-radius: 50px;
+        margin-top: 1rem;
+        display: inline-flex;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    .update-photo-btn {
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+        border-radius: 50px;
+        padding: 8px 20px;
+    }
+
+    .update-photo-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .form-control {
+        border-radius: 8px;
+        padding: 12px 15px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-save {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .profile-pic-upload {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+    }
+
+    .profile-pic-upload input[type="file"] {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    .video-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        opacity: 0.15;
+    }
+
+    /* Modal styles */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .modal-footer {
+        border-top: none;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .profile-img {
+            width: 120px;
+            height: 120px;
+        }
+        
+        .profile-content {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<video autoplay muted loop class="video-bg">
+    <source src="{% static 'videos/face-scan.mp4' %}" type="video/mp4">
+</video>
+<div class="container my-5">
+    <div class="profile-container">
+        <!-- Profile Header with Image -->
+        <div class="profile-header">
+            <div class="profile-img-container">
+                <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}{% static 'images/default-face.png' %}{% endif %}" 
+                     alt="Profile picture" class="profile-img">
+            </div>
+            <h3 class="mb-2">{{ user.get_full_name|default:user.username }}</h3>
+            <p class="text-muted mb-2">@{{ user.username }}</p>
+            
+            <span class="security-badge bg-{% if user.is_face_registered %}success{% else %}warning{% endif %} text-white">
+                <i class="fas fa-{% if user.is_face_registered %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                Face Verification {% if user.is_face_registered %}Enabled{% else %}Disabled{% endif %}
+            </span>
+            
+            <div>
+                <button class="btn btn-primary update-photo-btn" data-bs-toggle="modal" data-bs-target="#updateProfilePicModal">
+                    <i class="fas fa-camera me-2"></i>Update Photo
+                </button>
+            </div>
+        </div>
+        
+        <!-- Profile Settings Form -->
+        <div class="profile-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">Profile Settings</h4>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                </a>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row mb-3">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="form-label">First Name</label>
+                        <input type="text" class="form-control" name="first_name" value="{{ user.first_name }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" class="form-control" name="last_name" value="{{ user.last_name }}">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email" value="{{ user.email }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Change Profile Picture</label>
+                    <div class="profile-pic-upload">
+                        <input type="file" class="form-control" name="profile_picture" accept="image/*" id="profilePictureInput">
+                        <button type="button" class="btn btn-outline-primary w-100" onclick="document.getElementById('profilePictureInput').click()">
+                            <i class="fas fa-upload me-2"></i> Choose File
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-save w-100">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update Profile Picture Modal -->
+<div class="modal fade" id="updateProfilePicModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Profile Picture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'update_profile_pic' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Please take a clear photo of your face for verification
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Capture New Photo</label>
+                        <input type="file" class="form-control" name="profile_picture" accept="image/*" capture="environment" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Photo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Profile picture preview
+        $('input[name="profile_picture"]').change(function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('.profile-img').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    });
+</script>
+{% endblock %}

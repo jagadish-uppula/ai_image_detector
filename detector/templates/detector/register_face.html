@@ -1,0 +1,128 @@
+<!-- detector/templates/detector/register_face.html -->
+{% extends "detector/base.html" %}
+{% load static %}
+
+{% block title %}Register Face - AI Image Detector{% endblock %}
+
+{% block extra_css %}
+<style>
+    .camera-container {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .camera-preview {
+        width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        border-radius: 5px;
+        margin: 0 auto 20px;
+    }
+    
+    .instructions {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .current-face {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .current-face-img {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #dee2e6;
+    }
+    
+    .btn-change-face {
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="card-title mb-0">Register Your Face</h2>
+                        <a href="{% url 'profile' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Profile
+                        </a>
+                    </div>
+                    
+                    {% if user.profile_picture %}
+                    <div class="current-face">
+                        <h5>Current Profile Picture</h5>
+                        <img src="{{ user.profile_picture.url }}" alt="Current profile" class="current-face-img mb-2">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="instructions mb-4">
+                        <h5><i class="fas fa-info-circle me-2"></i>Instructions</h5>
+                        <ul>
+                            <li>Make sure your face is clearly visible</li>
+                            <li>Use good lighting conditions</li>
+                            <li>Remove sunglasses or hats</li>
+                            <li>Look directly at the camera</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="camera-container">
+                        <div class="text-center mb-4">
+                            <img id="camera-preview" class="camera-preview" alt="Face preview">
+                        </div>
+                        
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Capture your face</label>
+                                <input type="file" class="form-control" id="face-image" 
+                                       name="face_image" accept="image/*" capture="environment" required>
+                                <div class="form-text">This will be used for identity verification</div>
+                                {% if form.face_image.errors %}
+                                    <div class="text-danger small">{{ form.face_image.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-check-circle me-2"></i>Register Face
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const faceInput = document.getElementById('face-image');
+    const preview = document.getElementById('camera-preview');
+    
+    faceInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+            }
+            
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,388 @@
+{% extends "detector/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - AI Image Detector{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+        text-align: center;
+        transition: all 0.3s;
+        border-left: 5px solid;
+        background: white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+    
+    .total-stat {
+        border-color: #4361ee;
+        background: linear-gradient(135deg, rgba(67,97,238,0.1) 0%, rgba(255,255,255,1) 100%);
+    }
+    
+    .total-stat .stat-icon {
+        color: #4361ee;
+    }
+    
+    .real-stat {
+        border-color: #4cc9f0;
+        background: linear-gradient(135deg, rgba(76,201,240,0.1) 0%, rgba(255,255,255,1) 100%);
+    }
+    
+    .real-stat .stat-icon {
+        color: #4cc9f0;
+    }
+    
+    .ai-stat {
+        border-color: #f72585;
+        background: linear-gradient(135deg, rgba(247,37,133,0.1) 0%, rgba(255,255,255,1) 100%);
+    }
+    
+    .ai-stat .stat-icon {
+        color: #f72585;
+    }
+    
+    .accuracy-stat {
+        border-color: #f8961e;
+        background: linear-gradient(135deg, rgba(248,150,30,0.1) 0%, rgba(255,255,255,1) 100%);
+    }
+    
+    .accuracy-stat .stat-icon {
+        color: #f8961e;
+    }
+    
+    .recent-analysis {
+        border-left: 4px solid;
+        padding-left: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    
+    .recent-analysis:hover {
+        transform: translateX(5px);
+    }
+    
+    .recent-analysis.real {
+        border-color: #4cc9f0;
+    }
+    
+    .recent-analysis.ai {
+        border-color: #f72585;
+    }
+    
+    .analysis-img {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    
+    .progress-thin {
+        height: 8px;
+        border-radius: 4px;
+    }
+    
+    .face-status {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+    
+    .face-verified {
+        background-color: #4cc9f0;
+        color: white;
+    }
+    
+    .face-not-verified {
+        background-color: #f8961e;
+        color: white;
+    }
+    
+    .face-not-recognized {
+        background-color: #f72585;
+        color: white;
+    }
+    
+    .face-not-detected {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .quick-actions .btn {
+        margin-bottom: 12px;
+        text-align: left;
+        padding: 12px 15px;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    
+    .quick-actions .btn i {
+        margin-right: 10px;
+        font-size: 18px;
+    }
+    
+    .quick-actions .btn:hover {
+        transform: translateX(5px);
+    }
+    
+    .dashboard-title {
+        position: relative;
+        padding-bottom: 10px;
+    }
+    .video-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        opacity: 0.15;
+    }
+    
+    .dashboard-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: #4361ee;
+        border-radius: 2px;
+    }
+    
+    .face-status-card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .face-status-icon {
+        font-size: 2rem;
+        margin-right: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<video autoplay muted loop class="video-bg">
+    <source src="{% static 'videos/face-scan.mp4' %}" type="video/mp4">
+</video>
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="dashboard-title">Dashboard</h2>
+        <p class="text-muted">Overview of your image analysis activities</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row">
+    <div class="col-md-6 col-lg-3" data-aos="fade-up">
+        <div class="stat-card total-stat">
+            <div class="stat-icon">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <h5>Total Analyses</h5>
+            <div class="stat-value">
+                {{ stats.total_analyses }}
+            </div>
+            <small class="text-muted">All time</small>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+        <div class="stat-card real-stat">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h5>Real Images</h5>
+            <div class="stat-value">
+                {{ stats.real_images }}
+            </div>
+            <small class="text-muted">{{ real_percentage|floatformat:1 }}% of total</small>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+        <div class="stat-card ai-stat">
+            <div class="stat-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h5>AI-Generated</h5>
+            <div class="stat-value">
+                {{ stats.ai_generated }}
+            </div>
+            <small class="text-muted">{{ ai_percentage|floatformat:1 }}% of total</small>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+        <div class="stat-card accuracy-stat">
+            <div class="stat-icon">
+                <i class="fas fa-bullseye"></i>
+            </div>
+            <h5>Avg Confidence</h5>
+            <div class="stat-value">
+                {{ avg_confidence|floatformat:1 }}%
+            </div>
+            <small class="text-muted">Overall accuracy</small>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Recent Analyses</h5>
+                    <a href="{% url 'analyze' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-history me-1"></i>View All
+                    </a>
+                </div>
+                
+                {% if recent_analyses %}
+                <div class="list-group list-group-flush">
+                    {% for analysis in recent_analyses %}
+                    <div class="list-group-item border-0 px-0 py-3">
+                        <div class="recent-analysis {% if analysis.is_ai_generated %}ai{% else %}real{% endif %}">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <img src="{{ analysis.image.url }}" alt="Analyzed image" class="analysis-img">
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">
+                                            {% if analysis.is_ai_generated %}
+                                                <span class="badge bg-danger">AI-Generated</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Real Image</span>
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">{{ analysis.created_at|timesince }} ago</small>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1 me-3">
+                                            <div class="progress progress-thin">
+                                                <div class="progress-bar {% if analysis.is_ai_generated %}bg-danger{% else %}bg-success{% endif %}" 
+                                                     role="progressbar" style="width: {{ analysis.confidence|floatformat:0 }}%" 
+                                                     aria-valuenow="{{ analysis.confidence|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <small class="text-muted">Confidence: {{ analysis.confidence|floatformat:2 }}%</small>
+                                        </div>
+                                        <div>
+                                            {% if analysis.similarity_score %}
+                                                {% if analysis.similarity_score > 0.7 %}
+                                                    <span class="face-status face-verified" title="Face verified">
+                                                        <i class="fas fa-check"></i>
+                                                    </span>
+                                                {% elif analysis.similarity_score > 0.4 %}
+                                                    <span class="face-status face-not-verified" title="Face not verified">
+                                                        <i class="fas fa-question"></i>
+                                                    </span>
+                                                {% else %}
+                                                    <span class="face-status face-not-recognized" title="Face not recognized">
+                                                        <i class="fas fa-times"></i>
+                                                    </span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="face-status face-not-detected" title="No face detected">
+                                                    <i class="fas fa-eye-slash"></i>
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="text-muted mb-3">
+                        <i class="fas fa-folder-open fa-3x"></i>
+                    </div>
+                    <h5>No Recent Analyses</h5>
+                    <p class="text-muted">Start by analyzing your first image</p>
+                    <a href="{% url 'predict' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Analyze Image
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Quick Actions</h5>
+                <div class="quick-actions">
+                    <a href="{% url 'predict' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-search"></i> Detect AI Image
+                    </a>
+                    {% if not user.face_embedding %}
+                    <a href="{% url 'register_face' %}" class="btn btn-outline-success w-100">
+                        <i class="fas fa-user-plus"></i> Register Your Face
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'security' %}" class="btn btn-outline-info w-100">
+                        <i class="fas fa-shield-alt"></i> Check Profile Security
+                    </a>
+                    <a href="{% url 'visualize' %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-chart-bar"></i> View Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm face-status-card">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Face Status</h5>
+                {% if user.face_embedding %}
+                <div class="alert alert-success d-flex align-items-center mb-4">
+                    <i class="fas fa-check-circle face-status-icon"></i>
+                    <div>
+                        <h6 class="mb-1">Face Registered</h6>
+                        <p class="mb-0">You can now verify your identity in image analyses</p>
+                    </div>
+                </div>
+                <a href="{% url 'register_face' %}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-sync-alt me-2"></i> Update Face Registration
+                </a>
+                {% else %}
+                <div class="alert alert-warning d-flex align-items-center mb-4">
+                    <i class="fas fa-exclamation-triangle face-status-icon"></i>
+                    <div>
+                        <h6 class="mb-1">Face Not Registered</h6>
+                        <p class="mb-0">Register your face for enhanced security</p>
+                    </div>
+                </div>
+                <a href="{% url 'register_face' %}" class="btn btn-primary w-100">
+                    <i class="fas fa-user-plus me-2"></i> Register Your Face
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

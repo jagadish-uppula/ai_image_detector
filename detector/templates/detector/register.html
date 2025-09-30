@@ -1,0 +1,237 @@
+{% extends 'detector/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #4361ee;  /* Vibrant blue */
+        --secondary-color: #3a0ca3; /* Deep purple */
+        --accent-color: #f72585;   /* Pink accent */
+        --light-color: #f8f9fa;    /* Light background */
+        --dark-color: #212529;     /* Dark text */
+    }
+    
+    .register-container {
+        max-width: 800px;
+        background: linear-gradient(135deg, var(--light-color) 0%, #e9ecef 100%);
+        border-radius: 20px;
+        padding: 2rem;
+    }
+    
+    .register-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        background: white;
+    }
+    
+    .card-header {
+        background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+    
+    .profile-pic-container {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background-color: #f0f0f0;
+        margin: 0 auto 20px;
+        overflow: hidden;
+        position: relative;
+        border: 3px dashed #ced4da;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .profile-pic-container:hover {
+        border-color: var(--accent-color);
+        transform: scale(1.05);
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+    }
+    
+    .alert-danger {
+        background-color: #ffebee;
+        border-color: #ffcdd2;
+        color: #c62828;
+    }
+    .video-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        opacity: 0.15;
+    }
+    
+    /* Add some animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    }
+    
+    .register-card {
+        animation: fadeIn 0.6s ease-out;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<video autoplay muted loop class="video-bg">
+    <source src="{% static 'videos/face-scan.mp4' %}" type="video/mp4">
+</video>
+<div class="container register-container my-5">
+    <div class="card register-card">
+        <div class="card-header bg-primary text-white py-4">
+            <h2 class="text-center mb-0"><i class="bi bi-shield-lock"></i> Create Your Account</h2>
+        </div>
+        <div class="card-body p-5">
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                
+                {% if form.errors or messages %}
+                    <div class="alert alert-danger">
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                        {% if form.non_field_errors %}
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                <div class="text-center mb-4">
+                    <label for="id_profile_picture" class="profile-pic-container">
+                        <input type="file" name="profile_picture" accept="image/*" id="id_profile_picture" style="display: none;">
+                        {% if form.profile_picture.value %}
+                            <img id="profilePicPreview" src="{{ form.profile_picture.value.url }}" alt="Profile picture">
+                        {% else %}
+                            <div class="profile-pic-placeholder">
+                                <i class="bi bi-person-plus display-4 text-muted"></i>
+                                <p class="mb-0 small">Add Photo</p>
+                            </div>
+                        {% endif %}
+                    </label>
+                    {% if form.profile_picture.errors %}
+                        <div class="text-danger small">
+                            {{ form.profile_picture.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="id_first_name" class="form-label">First Name</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="text-danger small">
+                                {{ form.first_name.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="id_last_name" class="form-label">Last Name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="text-danger small">
+                                {{ form.last_name.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_username" class="form-label">Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="text-danger small">
+                            {{ form.username.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_email" class="form-label">Email</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-danger small">
+                            {{ form.email.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_password1" class="form-label">Password</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="text-danger small">
+                            {{ form.password1.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="id_password2" class="form-label">Confirm Password</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="text-danger small">
+                            {{ form.password2.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-person-plus me-2"></i> Register
+                    </button>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <p class="mb-0">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Profile picture preview
+        $('#id_profile_picture').change(function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#profilePicPreview').attr('src', e.target.result).show();
+                    $('.profile-pic-placeholder').hide();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+</script>
+{% endblock %}

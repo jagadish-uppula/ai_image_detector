@@ -1,0 +1,337 @@
+{% extends 'detector/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url('{% static "images/ai-security-bg.jpg" %}');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 120px 0;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.3) 0%, rgba(58, 12, 163, 0.3) 100%);
+        z-index: 1;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .feature-card {
+        transition: all 0.3s;
+        height: 100%;
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        background: white;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+    }
+    
+    .feature-icon {
+        font-size: 3.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+    }
+    
+    .algorithm-card {
+        border-left: 4px solid var(--primary-color);
+        transition: all 0.3s;
+    }
+    
+    .algorithm-card:hover {
+        transform: translateX(5px);
+    }
+    
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    
+    .key-feature-img {
+        height: 200px;
+        object-fit: cover;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .section-title {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 2rem;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: var(--primary-color);
+        border-radius: 2px;
+    }
+    
+    .tech-icon {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        margin-right: 0.5rem;
+    }
+    .video-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        opacity: 0.15;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<video autoplay muted loop class="video-bg">
+    <source src="{% static 'videos/face-scan.mp4' %}" type="video/mp4">
+</video>
+<section class="hero-section mb-5">
+    <div class="container hero-content">
+        <h1 class="display-3 fw-bold mb-4" data-aos="fade-up">Detecting AI-Generated Images</h1>
+        <p class="lead mb-4 fs-4" data-aos="fade-up" data-aos-delay="100">Advanced facial similarity and feature extraction for digital security</p>
+        {% if not user.is_authenticated %}
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center" data-aos="fade-up" data-aos-delay="200">
+            <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-4 gap-3">
+                <i class="fas fa-rocket me-2"></i>Get Started
+            </a>
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4">
+                <i class="fas fa-sign-in-alt me-2"></i>Login
+            </a>
+        </div>
+        {% else %}
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center" data-aos="fade-up" data-aos-delay="200">
+            <a href="{% url 'predict' %}" class="btn btn-primary btn-lg px-4 gap-3">
+                <i class="fas fa-search me-2"></i>Analyze Image
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-lg px-4">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="mb-5 py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 section-title" data-aos="fade-up">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card feature-card shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <h3 class="mb-3">Upload Image</h3>
+                        <p class="mb-0">Upload an image or capture one using your camera for analysis. This system supports multiple image formats.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="card feature-card shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h3 class="mb-3">AI Detection</h3>
+                        <p class="mb-0">Advanced deep learning model analyzes the image for AI-generated artifacts and patterns.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="card feature-card shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3 class="mb-3">Get Results</h3>
+                        <p class="mb-0">Receive detailed analysis with confidence scores and face verification results.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mb-5 py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
+                <h2 class="mb-4 section-title">Face Simulation Demo</h2>
+                <div class="video-container shadow-lg">
+                    <iframe src="https://www.youtube.com/embed/example" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left">
+                <h2 class="mb-4 section-title">Advanced Detection Technology</h2>
+                <p class="mb-4">This system uses state-of-the-art deep learning models to detect subtle artifacts left by AI image generators with over 95% accuracy.</p>
+                
+                <div class="card algorithm-card mb-3 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="d-flex align-items-center">
+                            <i class="fas fa-project-diagram tech-icon"></i>
+                            Deep Feature Extraction
+                        </h5>
+                        <p class="mb-0">Extracts high-level features using Xception architecture trained on real and AI-generated images from multiple sources.</p>
+                    </div>
+                </div>
+                
+                <div class="card algorithm-card mb-3 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="d-flex align-items-center">
+                            <i class="fas fa-user-shield tech-icon"></i>
+                            Facial Similarity Analysis
+                        </h5>
+                        <p class="mb-0">Uses FaceNet embeddings to compare faces and detect inconsistencies in AI-generated portraits with precision.</p>
+                    </div>
+                </div>
+                
+                <div class="card algorithm-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="d-flex align-items-center">
+                            <i class="fas fa-chart-line tech-icon"></i>
+                            Confidence Scoring
+                        </h5>
+                        <p class="mb-0">Provides probabilistic confidence scores to indicate the likelihood of an image being AI-generated with detailed breakdown.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mb-5 py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 section-title" data-aos="fade-up">Key Features</h2>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+                <div class="card h-100 shadow">
+                    <img src="{% static 'images/ai-detection.jpg' %}" class="card-img-top key-feature-img" alt="AI Detection">
+                    <div class="card-body">
+                        <h5 class="card-title">AI Detection</h5>
+                        <p class="card-text">Identify images created by AI models like DALL-E, Midjourney, and Stable Diffusion with high accuracy.</p>
+                    </div>
+<!-- Inside home.html, find the Key Features section -->
+<div class="card-footer bg-transparent border-top-0">
+    {% if user.is_authenticated %}
+        <a href="{% url 'predict' %}" class="btn btn-sm btn-outline-primary">Try Now</a>
+    {% else %}
+        <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">Login to Try</a>
+    {% endif %}
+</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+                <div class="card h-100 shadow">
+                    <img src="{% static 'images/face-verification.jpg' %}" class="card-img-top key-feature-img" alt="Face Verification">
+                    <div class="card-body">
+                        <h5 class="card-title">Face Verification</h5>
+                        <p class="card-text">Verify identity by comparing faces with registered profile images using advanced facial recognition.</p>
+                    </div>
+<!-- For "Face Verification" -->
+<div class="card-footer bg-transparent border-top-0">
+    {% if user.is_authenticated %}
+        <a href="{% url 'security' %}" class="btn btn-sm btn-outline-primary">Learn More</a>
+    {% else %}
+        <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">Login to Learn</a>
+    {% endif %}
+</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+                <div class="card h-100 shadow">
+                    <img src="{% static 'images/visual-analytics.jpg' %}" class="card-img-top key-feature-img" alt="Visual Analytics">
+                    <div class="card-body">
+                        <h5 class="card-title">Visual Analytics</h5>
+                        <p class="card-text">Detailed visualizations of your analysis history and detection patterns with interactive charts.</p>
+                    </div>
+<!-- For "Visual Analytics" -->
+<div class="card-footer bg-transparent border-top-0">
+    {% if user.is_authenticated %}
+        <a href="{% url 'visualize' %}" class="btn btn-sm btn-outline-primary">View Demo</a>
+    {% else %}
+        <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">Login to View</a>
+    {% endif %}
+</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
+                <div class="card h-100 shadow">
+                    <img src="{% static 'images/security.jpg' %}" class="card-img-top key-feature-img" alt="Security">
+                    <div class="card-body">
+                        <h5 class="card-title">Enhanced Security</h5>
+                        <p class="card-text">Protect your digital identity from deepfakes and synthetic media with this advanced detection system.</p>
+                    </div>
+<!-- For "Enhanced Security" -->
+<div class="card-footer bg-transparent border-top-0">
+    {% if user.is_authenticated %}
+        <a href="{% url 'about' %}" class="btn btn-sm btn-outline-primary">Read More</a>
+    {% else %}
+        <a href="{% url 'register' %}" class="btn btn-sm btn-outline-primary">Register</a>
+    {% endif %}
+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="mb-4" data-aos="fade-up">Ready to Detect AI-Generated Images?</h2>
+        <p class="lead mb-4" data-aos="fade-up" data-aos-delay="100">Start using this advanced detection system today to verify image authenticity and protect your digital identity.</p>
+        {% if user.is_authenticated %}
+        <a href="{% url 'predict' %}" class="btn btn-light btn-lg px-4" data-aos="fade-up" data-aos-delay="200">
+            <i class="fas fa-search me-2"></i>Analyze Image
+        </a>
+        {% else %}
+        <div data-aos="fade-up" data-aos-delay="200">
+            <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4 me-2">
+                <i class="fas fa-user-plus me-2"></i>Register
+            </a>
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4">
+                <i class="fas fa-sign-in-alt me-2"></i>Login
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

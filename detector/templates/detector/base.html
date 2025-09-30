@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Detector | {% block title %}{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-gradient-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'home' %}">
+                <i class="fas fa-robot me-2"></i>AI Image Detector
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">
+                            <i class="fas fa-home me-1"></i> Home
+                        </a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'dashboard' in request.path %}active{% endif %}" href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'analyze' in request.path %}active{% endif %}" href="{% url 'analyze' %}">
+                            <i class="fas fa-history me-1"></i> Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'predict' in request.path %}active{% endif %}" href="{% url 'predict' %}">
+                            <i class="fas fa-search me-1"></i> Detect
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'visualize' in request.path %}active{% endif %}" href="{% url 'visualize' %}">
+                            <i class="fas fa-chart-line me-1"></i> Visualize
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'security' in request.path %}active{% endif %}" href="{% url 'security' %}">
+                            <i class="fas fa-shield-alt me-1"></i> Security
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'about' in request.path %}active{% endif %}" href="{% url 'about' %}">
+                            <i class="fas fa-info-circle me-1"></i> About
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li><a class="dropdown-item" href="{% url 'profile' %}">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt me-1"></i> Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'register' %}">
+                            <i class="fas fa-user-plus me-1"></i> Register
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container my-4 flex-grow-1">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle me-2"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle me-2"></i>
+                    {% endif %}
+                    <div>{{ message }}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+<!-- Footer -->
+<footer class="bg-dark text-white py-4 mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4 mb-md-0">
+                <h5 class="text-primary mb-3">AI Image Detector</h5>
+                <p>Advanced technology for detecting AI-generated images and verifying digital identities.</p>
+            </div>
+            <div class="col-md-4 mb-4 mb-md-0">
+                <h5 class="text-primary mb-3">Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="{% url 'home' %}" class="text-white text-decoration-none">Home</a></li>
+                    <li><a href="{% url 'about' %}" class="text-white text-decoration-none">About</a></li>
+                    {% if user.is_authenticated %}
+                        <li><a href="{% url 'predict' %}" class="text-white text-decoration-none">Detect AI Images</a></li>
+                        <li><a href="{% url 'security' %}" class="text-white text-decoration-none">Security</a></li>
+                    {% else %}
+                        <li><a href="{% url 'login' %}?next={% url 'predict' %}" class="text-white text-decoration-none">Detect AI Images</a></li>
+                        <li><a href="{% url 'login' %}?next={% url 'security' %}" class="text-white text-decoration-none">Security</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5 class="text-primary mb-3">Connect</h5>
+                <div class="d-flex gap-3">
+                    <a href="#" class="text-white"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-white"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="text-white"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+        <hr class="my-4 bg-secondary">
+        <div class="text-center">
+            <p class="mb-0">&copy; 2025 AI Image Detector | MCA Project</p>
+        </div>
+    </div>
+</footer>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    {% block extra_js %}
+    <script>
+        // Initialize AOS animation
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        
+        // Global camera variables
+        let cameraStream = null;
+        const cameraPreview = document.getElementById('cameraPreview');
+        const captureBtn = document.getElementById('captureBtn');
+        
+        // Function to start camera
+        function startCamera() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user' 
+                    } 
+                })
+                .then(function(stream) {
+                    cameraStream = stream;
+                    if (cameraPreview) {
+                        cameraPreview.srcObject = stream;
+                        cameraPreview.play();
+                    }
+                    if (captureBtn) {
+                        captureBtn.style.display = 'block';
+                    }
+                })
+                .catch(function(error) {
+                    console.error("Camera error: ", error);
+                    alert('Could not access the camera: ' + error.message);
+                });
+            } else {
+                alert('Camera access is not supported by your browser');
+            }
+        }
+        
+        // Function to stop camera
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            if (cameraPreview) {
+                cameraPreview.srcObject = null;
+            }
+        }
+        
+        // Initialize camera when modal opens
+        $(document).ready(function() {
+            $('body').on('shown.bs.modal', '#cameraModal', function() {
+                startCamera();
+            });
+            
+            // Stop camera when modal closes
+            $('body').on('hidden.bs.modal', '#cameraModal', function() {
+                stopCamera();
+            });
+            
+            // Capture photo
+            $(document).on('click', '#captureBtn', function() {
+                if (!cameraPreview) return;
+                
+                // Create canvas element
+                const canvas = document.createElement('canvas');
+                canvas.width = cameraPreview.videoWidth;
+                canvas.height = cameraPreview.videoHeight;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw current frame
+                ctx.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+                
+                // Get image data
+                const imageData = canvas.toDataURL('image/jpeg', 0.9);
+                
+                // Display preview
+                const previewId = $(this).closest('.modal').data('preview-id') || 'imagePreview';
+                $(`#${previewId}`).attr('src', imageData).show();
+                
+                // Hide upload area if exists
+                $('.upload-area').hide();
+                
+                // Create blob and set as file input
+                canvas.toBlob(function(blob) {
+                    const file = new File([blob], 'captured.jpg', { type: 'image/jpeg' });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    
+                    // Find the corresponding file input
+                    const inputId = $(this).closest('.modal').data('input-id') || 'id_image';
+                    $(`#${inputId}`)[0].files = dataTransfer.files;
+                }.bind(this), 'image/jpeg', 0.9);
+                
+                // Close modal
+                $('#cameraModal').modal('hide');
+            });
+        });
+    </script>
+    {% endblock %}
+</body>
+</html>

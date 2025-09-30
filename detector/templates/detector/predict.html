@@ -1,0 +1,423 @@
+{% extends 'detector/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        background-color: #f8f9fa;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .upload-area:hover {
+        border-color: var(--primary-color);
+        background-color: #e9f0ff;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .result-card {
+        transition: all 0.3s;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .result-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .camera-preview {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        display: none;
+    }
+    
+    .capture-btn {
+        display: none;
+    }
+    
+    .progress-thin {
+        height: 10px;
+        border-radius: 5px;
+    }
+    
+    .similarity-face {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        margin: 0 auto;
+    }
+    
+    .similarity-face img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid #f0f0f0;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    
+    .similarity-percent {
+        position: absolute;
+        bottom: -10px;
+        right: -10px;
+        background: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        font-size: 0.8rem;
+    }
+    
+    .analysis-tips-card {
+        border-left: 4px solid var(--primary-color);
+        transition: all 0.3s;
+    }
+    
+    .analysis-tips-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .tips-list .list-group-item {
+        border: none;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .tips-list .list-group-item:last-child {
+        border-bottom: none;
+    }
+    
+    .recent-analysis-item {
+        transition: all 0.3s;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    
+    .recent-analysis-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+    }
+    .video-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        opacity: 0.15;
+    }
+    
+    .recent-analysis-img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<video autoplay muted loop class="video-bg">
+    <source src="{% static 'videos/face-scan.mp4' %}" type="video/mp4">
+</video>
+<script>
+    $(document).ready(function() {
+        // Handle file selection
+        $('#id_image').change(function() {
+            var file = this.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#imagePreview').attr('src', e.target.result).show();
+                    $('.upload-area').hide();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Camera functionality
+        $('#openCameraBtn').click(function() {
+            $('.upload-area').hide();
+            $('#cameraModal').modal('show');
+            
+            // Access camera
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(stream) {
+                        $('#cameraPreview')[0].srcObject = stream;
+                        $('#captureBtn').show();
+                    })
+                    .catch(function(error) {
+                        alert('Could not access the camera: ' + error.message);
+                    });
+            } else {
+                alert('Camera access is not supported by your browser');
+            }
+        });
+        
+        // Capture photo
+        $('#captureBtn').click(function() {
+            var canvas = document.createElement('canvas');
+            var video = $('#cameraPreview')[0];
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            var imageData = canvas.toDataURL('image/jpeg');
+            $('#imagePreview').attr('src', imageData).show();
+            
+            // Stop camera stream
+            video.srcObject.getVideoTracks().forEach(track => track.stop());
+            $('#cameraModal').modal('hide');
+            
+            // Create a blob from the canvas and set it as the file input
+            canvas.toBlob(function(blob) {
+                var file = new File([blob], 'captured.jpg', { type: 'image/jpeg' });
+                var dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                $('#id_image')[0].files = dataTransfer.files;
+            }, 'image/jpeg');
+        });
+        
+        // Clean up when modal is closed
+        $('#cameraModal').on('hidden.bs.modal', function() {
+            var video = $('#cameraPreview')[0];
+            if (video.srcObject) {
+                video.srcObject.getVideoTracks().forEach(track => track.stop());
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Upload Image for Analysis</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" action="{% url 'predict' %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4 text-center">
+                        <label for="id_image" class="upload-area">
+                            <div class="upload-icon mb-3">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h5>Drag & Drop or Click to Browse</h5>
+                            <p class="text-muted">Supported formats: JPG, PNG (Max 5MB)</p>
+                            {{ form.image }}
+                        </label>
+                        <img id="imagePreview" src="#" alt="Preview" class="img-fluid rounded mt-3" style="display: none;">
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="button" id="openCameraBtn" class="btn btn-outline-primary">
+                            <i class="fas fa-camera me-2"></i>Use Camera
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Analyze Image
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if result %}
+        <div class="card shadow mb-4 result-card">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Analysis Result</h6>
+                <span class="badge rounded-pill {% if result.is_ai %}bg-danger{% else %}bg-success{% endif %}">
+                    {% if result.is_ai %}AI-Generated{% else %}Real Image{% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6 text-center mb-3 mb-md-0">
+                        <img src="{{ result.image_url }}" alt="Analyzed image" class="img-fluid rounded shadow-sm">
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Confidence: {{ result.confidence|floatformat:1 }}%</h5>
+                        <div class="progress progress-thin mb-4">
+                            <div class="progress-bar {% if result.is_ai %}bg-danger{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ result.confidence }}%" 
+                                 aria-valuenow="{{ result.confidence }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"></div>
+                        </div>
+                        
+                        {% if result.face_detected %}
+                        <h5 class="mb-3">Face Verification</h5>
+                        {% if result.has_stored_face %}
+                        <div class="d-flex align-items-center mb-3 flex-column flex-md-row">
+                            <div class="similarity-face me-md-3 mb-3 mb-md-0">
+                                <img src="{{ request.user.profile_picture.url }}" alt="Profile" class="img-fluid">
+                                <div class="similarity-percent {% if result.face_match %}bg-success text-white{% else %}bg-warning{% endif %}">
+                                    {{ result.similarity_score|floatformat:0 }}%
+                                </div>
+                            </div>
+                            <div class="text-center text-md-start">
+                                <p class="mb-1">
+                                    {% if result.face_match %}
+                                    <span class="text-success"><i class="fas fa-check-circle"></i> Verified</span>
+                                    {% else %}
+                                    <span class="text-warning"><i class="fas fa-exclamation-triangle"></i> Not Verified</span>
+                                    {% endif %}
+                                </p>
+                                <small class="text-muted">Similarity threshold: 45%</small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Face detected but no registered profile for comparison
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-eye-slash me-2"></i> No face detected in the image
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="alert {% if result.is_ai %}alert-danger{% else %}alert-success{% endif %}">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            {% if result.is_ai %}
+                            <i class="fas fa-exclamation-triangle fs-3"></i>
+                            {% else %}
+                            <i class="fas fa-check-circle fs-3"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="alert-heading">
+                                {% if result.is_ai %}
+                                Potential AI-Generated Content Detected
+                                {% else %}
+                                Likely Authentic Content
+                                {% endif %}
+                            </h5>
+                            <p class="mb-0">
+                                {% if result.is_ai %}
+                                This image appears to be AI-generated with {{ result.confidence|floatformat:1 }}% confidence. 
+                                Be cautious when trusting content from unverified sources.
+                                {% else %}
+                                This image appears to be authentic with {{ result.confidence|floatformat:1 }}% confidence.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4 analysis-tips-card">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Analysis Tips</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush tips-list">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Use high-quality images for better accuracy
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Focus on facial features when verifying identity
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Check for unnatural artifacts in the image
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Compare with known authentic images when possible
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        Results with confidence below 70% should be verified
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Analyses</h6>
+            </div>
+            <div class="card-body">
+                {% for analysis in recent_analyses %}
+                <div class="recent-analysis-item d-flex align-items-center mb-3">
+                    <img src="{{ analysis.image.url }}" alt="Recent analysis" class="recent-analysis-img rounded me-3">
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">{{ analysis.created_at|timesince }} ago</small>
+                            <span class="badge {% if analysis.is_ai_generated %}bg-danger{% else %}bg-success{% endif %} rounded-pill">
+                                {% if analysis.is_ai_generated %}AI{% else %}Real{% endif %}
+                            </span>
+                        </div>
+                        <div class="progress progress-thin mt-1">
+                            <div class="progress-bar {% if analysis.is_ai_generated %}bg-danger{% else %}bg-success{% endif %}" 
+                                 style="width: {{ analysis.confidence }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-3">
+                    <i class="fas fa-folder-open text-muted mb-2" style="font-size: 2rem;"></i>
+                    <p class="text-muted">No recent analyses found</p>
+                </div>
+                {% endfor %}
+                <a href="{% url 'analyze' %}" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                    <i class="fas fa-history me-2"></i>View All
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Camera Modal -->
+<div class="modal fade" id="cameraModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Capture Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <video id="cameraPreview" autoplay playsinline class="img-fluid rounded"></video>
+                <button id="captureBtn" class="btn btn-primary mt-3 capture-btn">
+                    <i class="fas fa-camera me-2"></i>Capture
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,735 @@
+{% extends 'detector/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3f37c9;
+        --success-color: #4cc9f0;
+        --danger-color: #f72585;
+        --warning-color: #f8961e;
+        --dark-color: #212529;
+        --light-color: #f8f9fa;
+    }
+
+    .verification-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+        overflow: hidden;
+        background: white;
+    }
+
+    .verification-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    }
+
+    .verification-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px 15px 0 0 !important;
+    }
+
+    .verification-icon {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        transition: all 0.3s;
+    }
+
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 12px;
+        padding: 2.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        background-color: #f8f9fa;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .upload-area:hover {
+        border-color: var(--primary-color);
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+
+    .upload-area::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(63, 55, 201, 0.1));
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .upload-area:hover::before {
+        opacity: 1;
+    }
+
+    /* Camera Modal Styles */
+    .camera-modal .modal-content {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .camera-container {
+        width: 100%;
+        position: relative;
+        margin-bottom: 20px;
+        background-color: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    #cameraPreview {
+        width: 100%;
+        height: auto;
+        display: block;
+        transform: scaleX(-1); /* Mirror effect for front camera */
+    }
+
+    .camera-controls {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        z-index: 1000;
+    }
+
+    .btn-capture {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        background-color: white;
+        color: var(--primary-color);
+        border: 2px solid white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        transition: all 0.3s;
+    }
+
+    .btn-capture:hover {
+        transform: scale(1.1);
+    }
+
+    .btn-switch-camera {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        z-index: 1000;
+        background-color: rgba(0,0,0,0.5);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+
+    .btn-switch-camera:hover {
+        background-color: rgba(0,0,0,0.7);
+    }
+
+    #verificationPreview {
+        width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        border-radius: 12px;
+        display: none;
+        margin: 0 auto;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .result-image {
+        width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .face-match {
+        border: 4px solid var(--success-color);
+        box-shadow: 0 0 0 4px rgba(76, 201, 240, 0.3);
+    }
+
+    .face-no-match {
+        border: 4px solid var(--danger-color);
+        box-shadow: 0 0 0 4px rgba(247, 37, 133, 0.3);
+    }
+
+    .face-unknown {
+        border: 4px solid var(--warning-color);
+        box-shadow: 0 0 0 4px rgba(248, 150, 30, 0.3);
+    }
+
+    .progress-thin {
+        height: 10px;
+        border-radius: 10px;
+    }
+
+    .security-tip-card {
+        border-left: 4px solid var(--primary-color);
+        transition: all 0.3s;
+        border-radius: 10px !important;
+    }
+
+    .security-tip-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .profile-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 15px;
+        border-radius: 50px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .profile-badge i {
+        margin-right: 8px;
+    }
+
+    .face-verified-badge {
+        background-color: rgba(76, 201, 240, 0.1);
+        color: var(--success-color);
+        border: 1px solid var(--success-color);
+    }
+
+    .face-not-verified-badge {
+        background-color: rgba(248, 150, 30, 0.1);
+        color: var(--warning-color);
+        border: 1px solid var(--warning-color);
+    }
+
+    .face-not-registered-badge {
+        background-color: rgba(247, 37, 133, 0.1);
+        color: var(--danger-color);
+        border: 1px solid var(--danger-color);
+    }
+
+    .similarity-face {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        margin-right: 20px;
+    }
+
+    .similarity-face img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid #eee;
+    }
+
+    .similarity-percent {
+        position: absolute;
+        bottom: -10px;
+        right: -10px;
+        background: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border: 2px solid #fff;
+    }
+
+    .similarity-percent.high {
+        background-color: var(--success-color);
+        color: white;
+    }
+
+    .similarity-percent.medium {
+        background-color: var(--warning-color);
+        color: white;
+    }
+
+    .similarity-percent.low {
+        background-color: var(--danger-color);
+        color: white;
+    }
+
+    /* Animation for verification process */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .verifying-animation {
+        animation: pulse 1.5s infinite;
+    }
+
+    /* Camera button styles */
+    .camera-action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .camera-action-buttons .btn {
+        flex: 1;
+    }
+    .video-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        opacity: 0.15;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .upload-area {
+            padding: 1.5rem;
+        }
+        
+        .verification-header h5 {
+            font-size: 1.2rem;
+        }
+        
+        .similarity-face {
+            width: 80px;
+            height: 80px;
+            margin-right: 15px;
+        }
+
+        .camera-action-buttons {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<video autoplay muted loop class="video-bg">
+    <source src="{% static 'videos/face-scan.mp4' %}" type="video/mp4">
+</video>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('cameraPreview');
+        const preview = document.getElementById('verificationPreview');
+        const captureBtn = document.getElementById('captureBtn');
+        const switchBtn = document.getElementById('switchCameraBtn');
+        const verificationInput = document.getElementById('id_verification_image');
+        const openCameraBtn = document.getElementById('openCameraBtn');
+        const verifyBtn = document.getElementById('verifyBtn');
+        let stream = null;
+        let facingMode = 'user'; // front camera by default
+
+        // Start camera
+        function startCamera() {
+            const constraints = {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            };
+
+            // Show loading state
+            $('#cameraModal').find('.modal-body').addClass('verifying-animation');
+            
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(function(s) {
+                    stream = s;
+                    video.srcObject = stream;
+                    video.onloadedmetadata = function() {
+                        video.play();
+                        $('#cameraModal').find('.modal-body').removeClass('verifying-animation');
+                    };
+                    captureBtn.style.display = 'flex';
+                })
+                .catch(function(err) {
+                    console.error("Camera error: ", err);
+                    $('#cameraModal').find('.modal-body').removeClass('verifying-animation');
+                    showErrorAlert("Could not access the camera. Please ensure you've granted camera permissions.");
+                });
+        }
+
+        // Switch camera
+        if (switchBtn) {
+            switchBtn.addEventListener('click', function() {
+                facingMode = facingMode === 'user' ? 'environment' : 'user';
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                startCamera();
+            });
+        }
+
+        // Capture image
+        captureBtn.addEventListener('click', function() {
+            if (!stream) return;
+            
+            // Show processing state
+            $(this).html('<i class="fas fa-spinner fa-spin"></i> Capturing...');
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Show preview
+            preview.src = canvas.toDataURL('image/jpeg');
+            preview.style.display = 'block';
+            
+            // Stop camera stream
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            // Create a file from canvas and assign to file input
+            canvas.toBlob(function(blob) {
+                const file = new File([blob], 'verification_image.jpg', { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                verificationInput.files = dataTransfer.files;
+                
+                // Hide upload area and show preview
+                document.querySelector('.upload-area').style.display = 'none';
+                preview.style.display = 'block';
+                
+                // Close modal after short delay
+                setTimeout(() => {
+                    $('#cameraModal').modal('hide');
+                    captureBtn.innerHTML = '<i class="fas fa-camera"></i>';
+                }, 500);
+            }, 'image/jpeg', 0.95);
+        });
+
+        // Initialize camera when modal opens
+        $('#cameraModal').on('shown.bs.modal', function() {
+            startCamera();
+        });
+
+        // Clean up camera when modal closes
+        $('#cameraModal').on('hidden.bs.modal', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            captureBtn.style.display = 'none';
+            captureBtn.innerHTML = '<i class="fas fa-camera"></i>';
+        });
+
+        // Handle file selection
+        $('#id_verification_image').change(function() {
+            var file = this.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#verificationPreview').attr('src', e.target.result).show();
+                    $('.upload-area').hide();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Verify button click handler
+        if (verifyBtn) {
+            verifyBtn.addEventListener('click', function() {
+                // Show verifying state
+                $(this).html('<i class="fas fa-spinner fa-spin"></i> Verifying...');
+                
+                // Simulate verification process (replace with actual API call)
+                setTimeout(function() {
+                    verifyBtn.innerHTML = '<i class="fas fa-check"></i> Verify Identity';
+                }, 2000);
+            });
+        }
+
+        // Helper function to show error alerts
+        function showErrorAlert(message) {
+            const alertHtml = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            $('main').prepend(alertHtml);
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card verification-card mb-4">
+            <div class="verification-header">
+                <h5><i class="fas fa-user-shield me-2"></i> Face Verification</h5>
+                <p class="mb-0">Verify your identity using facial recognition</p>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" action="{% url 'security' %}">
+                    {% csrf_token %}
+                    
+                    <div class="camera-action-buttons">
+                        <button type="button" id="openCameraBtn" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#cameraModal">
+                            <i class="fas fa-camera me-2"></i> Use Camera
+                        </button>
+                        <label for="id_verification_image" class="btn btn-outline-secondary">
+                            <i class="fas fa-upload me-2"></i> Upload Image
+                            {{ form.verification_image }}
+                        </label>
+                    </div>
+                    
+                    <div class="mb-4 text-center">
+                        <label for="id_verification_image" class="upload-area">
+                            <div class="verification-icon">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <h5>Drag & Drop or Click to Browse</h5>
+                            <p class="text-muted">Supported formats: JPG, PNG, JPEG</p>
+                        </label>
+                        <img id="verificationPreview" src="#" alt="Preview" class="img-fluid rounded mt-3" style="display: none;">
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" id="verifyBtn" class="btn btn-primary btn-lg">
+                            <i class="fas fa-shield-alt me-2"></i> Verify Identity
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if result %}
+        <div class="card verification-card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clipboard-check me-2"></i> Verification Result</h5>
+                <span class="badge rounded-pill {% if result.is_ai %}bg-danger{% else %}bg-success{% endif %}">
+                    {% if result.is_ai %}AI-Generated{% else %}Real Image{% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6 text-center mb-3 mb-md-0">
+                        <img src="{{ result.image_url }}" alt="Verification image" 
+                             class="img-fluid rounded result-image {% if result.face_match %}face-match{% elif result.face_detected and not result.face_match %}face-no-match{% else %}face-unknown{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Confidence: {{ result.confidence|floatformat:1 }}%</h5>
+                        <div class="progress progress-thin mb-4">
+                            <div class="progress-bar {% if result.is_ai %}bg-danger{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ result.confidence }}%" 
+                                 aria-valuenow="{{ result.confidence }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"></div>
+                        </div>
+                        
+                        {% if result.face_detected %}
+                        <h5 class="mb-3">Face Verification</h5>
+                        {% if result.has_stored_face %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="similarity-face me-3">
+                                <img src="{{ request.user.profile_picture.url }}" alt="Profile" class="img-fluid">
+                                <div class="similarity-percent {% if result.similarity_score > 70 %}high{% elif result.similarity_score > 40 %}medium{% else %}low{% endif %}">
+                                    {{ result.similarity_score|floatformat:0 }}%
+                                </div>
+                            </div>
+                            <div>
+                                <p class="mb-1">
+                                    {% if result.face_match %}
+                                    <span class="text-success"><i class="fas fa-check-circle"></i> Verified Match</span>
+                                    {% else %}
+                                    <span class="text-warning"><i class="fas fa-exclamation-triangle"></i> Possible Mismatch</span>
+                                    {% endif %}
+                                </p>
+                                <small class="text-muted">Similarity threshold: 45%</small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Face detected but no registered profile for comparison
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-eye-slash"></i> No face detected in the image
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="alert {% if result.is_ai %}alert-danger{% else %}alert-success{% endif %}">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            {% if result.is_ai %}
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                            {% else %}
+                            <i class="fas fa-check-circle fa-2x"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="alert-heading">
+                                {% if result.is_ai %}
+                                Potential AI-Generated Content Detected
+                                {% else %}
+                                Likely Authentic Content
+                                {% endif %}
+                            </h5>
+                            <p class="mb-0">
+                                {% if result.is_ai %}
+                                This image appears to be AI-generated with {{ result.confidence|floatformat:1 }}% confidence. 
+                                Be cautious when trusting content from unverified sources.
+                                {% else %}
+                                This image appears to be authentic with {{ result.confidence|floatformat:1 }}% confidence.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card verification-card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i> Your Profile</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if request.user.profile_picture %}
+                <img src="{{ request.user.profile_picture.url }}" alt="Profile" class="rounded-circle mb-3" width="150" height="150" style="object-fit: cover;">
+                {% else %}
+                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px; margin: 0 auto;">
+                    <i class="fas fa-user text-secondary" style="font-size: 4rem;"></i>
+                </div>
+                {% endif %}
+                <h5>{{ request.user.get_full_name|default:request.user.username }}</h5>
+                <p class="text-muted">{{ request.user.email }}</p>
+                
+                <div class="mb-4">
+                    {% if request.user.is_face_registered %}
+                    <span class="profile-badge face-verified-badge">
+                        <i class="fas fa-check-circle"></i> Face Registered
+                    </span>
+                    {% else %}
+                    <span class="profile-badge face-not-registered-badge">
+                        <i class="fas fa-exclamation-circle"></i> Face Not Registered
+                    </span>
+                    {% endif %}
+                </div>
+                
+                {% if not request.user.is_face_registered %}
+                <a href="{% url 'register_face' %}" class="btn btn-primary mb-3 w-100">
+                    <i class="fas fa-user-plus me-2"></i> Register Face
+                </a>
+                {% endif %}
+                
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-search me-2"></i> Total Analyses</span>
+                        <span class="badge bg-primary rounded-pill">{{ total_analyses }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-robot me-2"></i> AI Detections</span>
+                        <span class="badge bg-danger rounded-pill">{{ ai_detected }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-user-check me-2"></i> Face Verifications</span>
+                        <span class="badge bg-success rounded-pill">{{ face_verifications }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card verification-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i> Security Tips</h5>
+            </div>
+            <div class="card-body">
+                <div class="card security-tip-card mb-3">
+                    <div class="card-body">
+                        <h6><i class="fas fa-lightbulb text-primary me-2"></i> Verify Before Trusting</h6>
+                        <p class="small text-muted mb-0">Always verify images before trusting them, especially in sensitive situations.</p>
+                    </div>
+                </div>
+                <div class="card security-tip-card mb-3">
+                    <div class="card-body">
+                        <h6><i class="fas fa-sync-alt text-primary me-2"></i> Check Multiple Angles</h6>
+                        <p class="small text-muted mb-0">Request images from different angles when verifying identities.</p>
+                    </div>
+                </div>
+                <div class="card security-tip-card mb-3">
+                    <div class="card-body">
+                        <h6><i class="fas fa-eye text-primary me-2"></i> Examine Details</h6>
+                        <p class="small text-muted mb-0">Look for inconsistencies in lighting, shadows, and reflections.</p>
+                    </div>
+                </div>
+                <div class="card security-tip-card">
+                    <div class="card-body">
+                        <h6><i class="fas fa-history text-primary me-2"></i> Review History</h6>
+                        <p class="small text-muted mb-0">Regularly check your verification history for suspicious patterns.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Camera Modal -->
+<div class="modal fade camera-modal" id="cameraModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">Capture Your Face</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <div class="camera-container">
+                    <video id="cameraPreview" autoplay playsinline class="img-fluid rounded"></video>
+                    <div class="camera-controls">
+                        <button id="captureBtn" class="btn btn-capture">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
+                    <button type="button" id="switchCameraBtn" class="btn btn-switch-camera">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
