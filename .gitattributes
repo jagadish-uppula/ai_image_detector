@@ -1,2 +1,49 @@
 models/.h5 filter=lfs diff=lfs merge=lfs -text
 *.h5 filter=lfs diff=lfs merge=lfs -text
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+media/
+uploads/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Static files (collectstatic will handle these)
+staticfiles/
+
+# Database migrations (optional - you might want to keep them)
+# !detector/migrations/
+# !accounts/migrations/
+
+# Large files
+*.jpg
+*.jpeg
+*.png
+*.model
+*.h5
+*.pkl
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Backup files
+*.backup
