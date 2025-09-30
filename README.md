@@ -1,8 +1,8 @@
-# AI Image Detector
+# Detecting AI-Generated Images Using Facial Similarity and Feature Extraction for Digital Security
 
 A Django-based web application for detecting AI-generated images and facial verification using deep learning models.
 
-![AI Image Detector](screenshots/homepage.png)
+![AI Image Detector](screenshots/dashboard.png)
 
 ## 🚀 Features
 
@@ -14,20 +14,20 @@ A Django-based web application for detecting AI-generated images and facial veri
 
 ## 📸 Screenshots
 
-### Homepage
-![Homepage](screenshots/homepage.png)
+### Dashboard
+![Homepage](screenshots/dashboard.png)
 
 ### AI Image Detection
-![Detection Page](screenshots/detection.png)
+![Detection Page](screenshots/prediction.png)
 
 ### Face Verification
 ![Security Page](screenshots/security.png)
 
-### About Page
-![About Page](screenshots/about.png)
+### Analysis Page
+![About Page](screenshots/analysis.png)
 
-### Results Dashboard
-![Results](screenshots/results.png)
+### Vissualize Page
+![Results](screenshots/visualize.png)
 
 ## 🛠️ Technologies Used
 
@@ -59,7 +59,7 @@ A Django-based web application for detecting AI-generated images and facial veri
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/ai-image-detector.git
+   git clone https://github.com/jagadish-uppula/ai-image-detector.git
    cd ai-image-detector
    ```
 
