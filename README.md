@@ -12,6 +12,31 @@ A Django-based web application for detecting AI-generated images and facial veri
 - **User Authentication** - Secure login and registration system
 - **Security Dashboard** - Comprehensive analytics and history
 
+## 🖼️ Application Gallery
+
+| Feature | Screenshot |
+|---------|------------|
+| **Homepage** | ![Home](screenshots/dashboard.png) |
+| **AI Detection** | ![Detection](screenshots/prediction.png) |
+| **Face Verification** | ![Security](screenshots/security.png) |
+| **Anlysis Page** | ![Dashboard](screenshots/analysis.png) |
+
+### Detailed Views
+
+<details>
+<summary>📱 Mobile Responsive Design</summary>
+<br>
+<img src="screenshots/mobile-home.png" width="300" alt="Mobile Homepage">
+<img src="screenshots/mobile-detection.png" width="300" alt="Mobile Detection">
+</details>
+
+<details>
+<summary>🎨 UI Components</summary>
+<br>
+<img src="screenshots/forms.png" width="400" alt="Forms">
+<img src="screenshots/cards.png" width="400" alt="Cards">
+</details>
+
 ## 📸 Screenshots
 
 ### Dashboard
