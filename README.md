@@ -6,7 +6,7 @@
 
 A Django-based web application for detecting AI-generated images and facial verification using deep learning models.
 
-![AI Image Detector](<img src="screenshots/dashboard.png" alt="Description" width="50%"/>)
+![AI Image Detector](screenshots/dashboard.png)
 
 
 ## 🚀 Features
