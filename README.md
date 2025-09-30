@@ -1,8 +1,13 @@
+![Django](https://img.shields.io/badge/Django-4.2-green)
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13-orange)
+
 # Detecting AI-Generated Images Using Facial Similarity and Feature Extraction for Digital Security
 
 A Django-based web application for detecting AI-generated images and facial verification using deep learning models.
 
-![AI Image Detector](screenshots/dashboard.png)
+![AI Image Detector](<img src="screenshots/dashboard.png" alt="Description" width="50%"/>)
+
 
 ## 🚀 Features
 
@@ -20,39 +25,8 @@ A Django-based web application for detecting AI-generated images and facial veri
 | **AI Detection** | ![Detection](screenshots/prediction.png) |
 | **Face Verification** | ![Security](screenshots/security.png) |
 | **Anlysis Page** | ![Dashboard](screenshots/analysis.png) |
+| **Visualize** | ![Visualize](screenshots/visualize.png) |
 
-### Detailed Views
-
-<details>
-<summary>📱 Mobile Responsive Design</summary>
-<br>
-<img src="screenshots/mobile-home.png" width="300" alt="Mobile Homepage">
-<img src="screenshots/mobile-detection.png" width="300" alt="Mobile Detection">
-</details>
-
-<details>
-<summary>🎨 UI Components</summary>
-<br>
-<img src="screenshots/forms.png" width="400" alt="Forms">
-<img src="screenshots/cards.png" width="400" alt="Cards">
-</details>
-
-## 📸 Screenshots
-
-### Dashboard
-![Homepage](screenshots/dashboard.png)
-
-### AI Image Detection
-![Detection Page](screenshots/prediction.png)
-
-### Face Verification
-![Security Page](screenshots/security.png)
-
-### Analysis Page
-![About Page](screenshots/analysis.png)
-
-### Vissualize Page
-![Results](screenshots/visualize.png)
 
 ## 🛠️ Technologies Used
 
@@ -175,7 +149,7 @@ We welcome contributions! Please follow these steps:
 
 ## 👥 Authors
 
-- **Name** - [My GitHub](https://github.com/jagadish-uppula)
+- **Uppula Jagadish** - [My GitHub](https://github.com/jagadish-uppula)
 
 ## 🙏 Acknowledgments
 
